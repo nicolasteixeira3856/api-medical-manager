@@ -22,6 +22,32 @@ function generateToken(id) {
 }
 
 module.exports = {
+
+    async authentication(req, res) {
+		const email = req.body.email;
+		const password = req.body.password;
+		if (!email || !password)
+			return res.status(400).json({ msg: "Campos obrigatórios vazios!" });
+		try {
+			const physician  = await Physician.findOne({
+				where: { email },
+			});
+			if (!physician )
+				return res.status(404).json({ msg: "Usuário ou senha inválidos." });
+			else {
+				if (bcrypt.compareSync(password, physician.password)) {
+					const token = generateToken(physician.id);
+					return res
+						.status(200)
+						.json({ msg: "Autenticado com sucesso", token });
+				} else
+					return res.status(404).json({ msg: "Usuário ou senha inválidos." });
+			}
+		} catch (error) {
+			res.status(500).json(error);
+		}
+	},
+
     async listAllPhysicians(req, res) {
         const physicians = await Physician.findAll({
             order: [
